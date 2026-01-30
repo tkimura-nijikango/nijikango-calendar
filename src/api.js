@@ -6,8 +6,9 @@
 // GAS WebアプリのURL
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://script.google.com/macros/s/AKfycbyW2DFQ1EihC98tpz1tH0kvs-KUYc8byTizvPoedhosEp9lHP-Xyi9lywzuEfDk29qMlg/exec';
 
-// 開発用モックデータを使うかどうか（APIがあれば使わない）
-const USE_MOCK = false;
+// モックデータを使用するかどうか
+// GAS側のWebアプリがCORS対応したらfalseに変更
+const USE_MOCK = true;
 
 /**
  * 空き時間を取得
