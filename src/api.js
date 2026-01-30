@@ -8,7 +8,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://script.google.com/
 
 // モックデータを使用するかどうか
 // GAS側のWebアプリがCORS対応したらfalseに変更
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 /**
  * 空き時間を取得
@@ -25,6 +25,8 @@ export async function getAvailableSlots(userId = null) {
         url.searchParams.append('userId', userId);
     }
 
+    console.log('[API] Fetching slots from:', url.toString());
+
     try {
         const response = await fetch(url.toString(), {
             method: 'GET',
@@ -33,13 +35,20 @@ export async function getAvailableSlots(userId = null) {
             },
         });
 
+        console.log('[API] Response status:', response.status);
+        console.log('[API] Response headers:', Object.fromEntries(response.headers.entries()));
+
         if (!response.ok) {
-            throw new Error('空き時間の取得に失敗しました');
+            const errorText = await response.text();
+            console.error('[API] Error response:', errorText);
+            throw new Error(`空き時間の取得に失敗しました (status: ${response.status})`);
         }
 
-        return await response.json();
+        const data = await response.json();
+        console.log('[API] Received data:', data);
+        return data;
     } catch (error) {
-        console.error('getAvailableSlots error:', error);
+        console.error('[API Error] getAvailableSlots:', error);
         throw error;
     }
 }
@@ -59,6 +68,9 @@ export async function createBooking(bookingData, userId = null) {
         return getMockBookingResult(bookingData);
     }
 
+    console.log('[API] Creating booking at:', API_BASE_URL);
+    console.log('[API] Booking data:', { ...bookingData, userId });
+
     try {
         const response = await fetch(API_BASE_URL, {
             method: 'POST',
@@ -73,17 +85,23 @@ export async function createBooking(bookingData, userId = null) {
             }),
         });
 
+        console.log('[API] Response status:', response.status);
+        console.log('[API] Response headers:', Object.fromEntries(response.headers.entries()));
+
         const text = await response.text();
+        console.log('[API] Response text:', text);
 
         try {
             const data = JSON.parse(text);
+            console.log('[API] Parsed booking result:', data);
             return data;
         } catch (e) {
-            console.error('JSON parse error:', text);
+            console.error('[API] JSON parse error:', e);
+            console.error('[API] Raw text:', text);
             throw new Error('予約の作成に失敗しました');
         }
     } catch (error) {
-        console.error('createBooking error:', error);
+        console.error('[API Error] createBooking:', error);
         throw error;
     }
 }
