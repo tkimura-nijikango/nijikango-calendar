@@ -1,10 +1,13 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 
 /**
  * 予約完了画面コンポーネント
  * Meetリンクと予約詳細を表示
+ * 3秒後に自動的にウィンドウを閉じる
  */
 export default function Confirmation({ booking, onNewBooking }) {
+    const [countdown, setCountdown] = useState(3);
+
     // 日時をフォーマット
     const formattedDateTime = useMemo(() => {
         if (!booking.startTime) return '';
@@ -18,6 +21,31 @@ export default function Confirmation({ booking, onNewBooking }) {
         const dayOfWeek = dayNames[date.getDay()];
         return `${year}年${month}月${day}日（${dayOfWeek}）${hours}:${minutes}`;
     }, [booking.startTime]);
+
+    // 3秒後に自動で閉じる
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setCountdown(prev => {
+                if (prev <= 1) {
+                    clearInterval(timer);
+                    // LIFF環境なら閉じる、そうでなければメッセージ表示
+                    try {
+                        if (window.liff) {
+                            window.liff.closeWindow();
+                        } else {
+                            window.close();
+                        }
+                    } catch (e) {
+                        console.log('Window close failed:', e);
+                    }
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, []);
 
     return (
         <div className="confirmation fade-in">
@@ -62,6 +90,10 @@ export default function Confirmation({ booking, onNewBooking }) {
                     </a>
                 </div>
             )}
+
+            <p className="confirmation__countdown">
+                {countdown > 0 ? `${countdown}秒後に自動で閉じます...` : 'LINEに戻ってください'}
+            </p>
 
             <button
                 className="btn btn--secondary btn--full"

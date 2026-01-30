@@ -10,7 +10,8 @@ const STEPS = {
     CALENDAR: 1,
     TIME_SELECT: 2,
     FORM: 3,
-    CONFIRMATION: 4,
+    SUBMITTING: 4,      // 送信中（新規追加）
+    CONFIRMATION: 5,
 };
 
 /**
@@ -29,7 +30,8 @@ export default function App() {
     const [error, setError] = useState(null);
 
     // URLパラメータからユーザーIDを取得
-    const userId = new URLSearchParams(window.location.search).get('userId');
+    const userId = new URLSearchParams(window.location.search).get('userId') ||
+        new URLSearchParams(window.location.search).get('uid');
 
     // 空き時間を取得
     useEffect(() => {
@@ -71,29 +73,43 @@ export default function App() {
         setStep(STEPS.FORM);
     };
 
-    // 予約送信
+    // 予約送信（先に送信中画面を表示し、裏で処理を続ける）
     const handleSubmit = async (formData) => {
         setIsSubmitting(true);
         setError(null);
 
-        try {
-            const result = await createBooking(formData, userId);
+        // 先に送信中画面を表示
+        setStep(STEPS.SUBMITTING);
 
-            if (result.success) {
-                setBooking({
-                    ...formData,
-                    ...result,
-                });
-                setStep(STEPS.CONFIRMATION);
-            } else {
-                setError(result.error || '予約の作成に失敗しました');
-            }
-        } catch (err) {
-            setError('予約の作成に失敗しました。再度お試しください。');
-            console.error('Create booking error:', err);
-        } finally {
-            setIsSubmitting(false);
-        }
+        // 1秒待つ（体験のため）
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // 予約データを先にセット（Confirmationで使う）
+        const tempBooking = {
+            ...formData,
+            startTime: formData.datetime,
+            meetLink: null, // 後で更新される可能性あり
+        };
+        setBooking(tempBooking);
+
+        // 先にサンクスページを表示
+        setStep(STEPS.CONFIRMATION);
+        setIsSubmitting(false);
+
+        // 裏側でAPIリクエストを実行（投げっぱなし）
+        createBooking(formData, userId)
+            .then(result => {
+                if (result.success) {
+                    // 成功したらmeetLinkを更新
+                    setBooking(prev => ({
+                        ...prev,
+                        ...result,
+                    }));
+                }
+            })
+            .catch(err => {
+                console.error('Background booking error:', err);
+            });
     };
 
     // 新しい予約を開始
@@ -116,12 +132,13 @@ export default function App() {
         setStep(STEPS.TIME_SELECT);
     };
 
-    // 現在のステップ番号
+    // 現在のステップ番号（表示用）
     const currentStepNumber = () => {
         switch (step) {
             case STEPS.CALENDAR: return 1;
             case STEPS.TIME_SELECT: return 2;
             case STEPS.FORM: return 3;
+            case STEPS.SUBMITTING: return 3;
             case STEPS.CONFIRMATION: return 4;
             default: return 1;
         }
@@ -132,7 +149,7 @@ export default function App() {
             {/* ヘッダー */}
             <header className="header">
                 <img
-                    src="/logo.jpg"
+                    src="./logo.jpg"
                     alt="アノキャリア"
                     className="header__logo"
                 />
@@ -141,7 +158,7 @@ export default function App() {
             </header>
 
             {/* プログレスステップ（確認画面以外） */}
-            {step !== STEPS.CONFIRMATION && (
+            {step !== STEPS.CONFIRMATION && step !== STEPS.SUBMITTING && (
                 <div className="progress">
                     <div className={`progress__step ${currentStepNumber() >= 1 ? 'progress__step--completed' : ''} ${currentStepNumber() === 1 ? 'progress__step--active' : ''}`}>1</div>
                     <div className={`progress__line ${currentStepNumber() > 1 ? 'progress__line--completed' : ''}`}></div>
@@ -158,16 +175,32 @@ export default function App() {
                 </div>
             )}
 
-            {/* ローディング */}
+            {/* ローディング（空き日程取得中） */}
             {isLoading && (
-                <div className="loading">
-                    <div className="loading__spinner"></div>
-                    <span>空き時間を取得中...</span>
+                <div className="loading-overlay">
+                    <div className="loading-overlay__content">
+                        <div className="loading-overlay__spinner"></div>
+                        <p className="loading-overlay__text">
+                            空き日程を取得中<span className="loading-dots"><span>.</span><span>.</span><span>.</span></span>
+                        </p>
+                    </div>
+                </div>
+            )}
+
+            {/* 送信中オーバーレイ */}
+            {step === STEPS.SUBMITTING && (
+                <div className="loading-overlay">
+                    <div className="loading-overlay__content">
+                        <div className="loading-overlay__spinner"></div>
+                        <p className="loading-overlay__text">
+                            送信中<span className="loading-dots"><span>.</span><span>.</span><span>.</span></span>
+                        </p>
+                    </div>
                 </div>
             )}
 
             {/* メインコンテンツ */}
-            {!isLoading && (
+            {!isLoading && step !== STEPS.SUBMITTING && (
                 <>
                     {step === STEPS.CALENDAR && (
                         <div className="card fade-in">

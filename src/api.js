@@ -3,11 +3,11 @@
 //  GASバックエンドとの通信
 // ==============================================================================
 
-// GAS WebアプリのURL（デプロイ後に設定）
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+// GAS WebアプリのURL
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://script.google.com/macros/s/AKfycbyW2DFQ1EihC98tpz1tH0kvs-KUYc8byTizvPoedhosEp9lHP-Xyi9lywzuEfDk29qMlg/exec';
 
-// 開発用モックデータ
-const USE_MOCK = !API_BASE_URL;
+// 開発用モックデータを使うかどうか（APIがあれば使わない）
+const USE_MOCK = false;
 
 /**
  * 空き時間を取得
