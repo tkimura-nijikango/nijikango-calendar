@@ -123,6 +123,25 @@ function doPost(e) {
 function createCorsResponse(data) {
   const output = ContentService.createTextOutput(JSON.stringify(data));
   output.setMimeType(ContentService.MimeType.JSON);
+  
+  // CORSヘッダーを追加
+  output.setHeader('Access-Control-Allow-Origin', '*');
+  output.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  output.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  
+  return output;
+}
+
+/**
+ * OPTIONSリクエスト - CORSプリフライト対応
+ * @param {Object} e - リクエストイベント
+ */
+function doOptions(e) {
+  const output = ContentService.createTextOutput('');
+  output.setHeader('Access-Control-Allow-Origin', '*');
+  output.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  output.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  output.setHeader('Access-Control-Max-Age', '3600');
   return output;
 }
 

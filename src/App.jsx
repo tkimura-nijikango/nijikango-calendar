@@ -36,27 +36,38 @@ export default function App() {
     // 空き時間を取得
     useEffect(() => {
         async function fetchSlots() {
+            console.log('[App] Starting fetchSlots...');
+            console.log('[App] userId:', userId);
             setIsLoading(true);
             setError(null);
 
             try {
+                console.log('[App] Calling getAvailableSlots...');
                 const data = await getAvailableSlots(userId);
+                console.log('[App] getAvailableSlots returned:', data);
+
                 if (data.success) {
+                    console.log('[App] Success! Slots:', data.slots?.length || 0, 'items');
+                    console.log('[App] Config:', data.config);
                     setSlots(data.slots || []);
                     if (data.config && data.config.ownerName) {
                         setOwnerName(data.config.ownerName);
                     }
                 } else {
+                    console.error('[App] API returned error:', data.error);
                     setError(data.error || '空き時間の取得に失敗しました');
                 }
             } catch (err) {
+                console.error('[App] Fetch error:', err);
+                console.error('[App] Error stack:', err.stack);
                 setError('空き時間の取得に失敗しました。再度お試しください。');
-                console.error('Fetch slots error:', err);
             } finally {
+                console.log('[App] fetchSlots completed, isLoading -> false');
                 setIsLoading(false);
             }
         }
 
+        console.log('[App] useEffect triggered');
         fetchSlots();
     }, [userId]);
 
@@ -75,6 +86,7 @@ export default function App() {
 
     // 予約送信（先に送信中画面を表示し、裏で処理を続ける）
     const handleSubmit = async (formData) => {
+        console.log('[App] handleSubmit called with:', formData);
         setIsSubmitting(true);
         setError(null);
 
@@ -93,22 +105,27 @@ export default function App() {
         setBooking(tempBooking);
 
         // 先にサンクスページを表示
+        console.log('[App] Showing confirmation screen');
         setStep(STEPS.CONFIRMATION);
         setIsSubmitting(false);
 
         // 裏側でAPIリクエストを実行（投げっぱなし）
+        console.log('[App] Starting background booking API call...');
         createBooking(formData, userId)
             .then(result => {
+                console.log('[App] Background booking result:', result);
                 if (result.success) {
                     // 成功したらmeetLinkを更新
                     setBooking(prev => ({
                         ...prev,
                         ...result,
                     }));
+                } else {
+                    console.error('[App] Background booking failed:', result.error);
                 }
             })
             .catch(err => {
-                console.error('Background booking error:', err);
+                console.error('[App] Background booking error:', err);
             });
     };
 

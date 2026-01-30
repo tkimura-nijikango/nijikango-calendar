@@ -80,16 +80,3 @@ const ConfigManager = {
     scriptProps.setProperty(key, strValue);
   }
 };
-
-// グローバル設定オブジェクト（既存コードとの互換性用）
-const CONFIG = {
-  get CALENDAR_ID() { return ConfigManager.get('CALENDAR_ID'); },
-  get AVAILABLE_START_HOUR() { return ConfigManager.get('AVAILABLE_START_HOUR'); },
-  get AVAILABLE_END_HOUR() { return ConfigManager.get('AVAILABLE_END_HOUR'); },
-  get SLOT_DURATION_MINUTES() { return ConfigManager.get('SLOT_DURATION_MINUTES'); },
-  get DAYS_AHEAD() { return ConfigManager.get('DAYS_AHEAD'); },
-  get AVAILABLE_DAYS() { return ConfigManager.get('AVAILABLE_DAYS'); },
-  get TIMEZONE() { return ConfigManager.get('TIMEZONE'); },
-  get OWNER_EMAIL() { return ConfigManager.get('OWNER_EMAIL'); },
-  get OWNER_NAME() { return ConfigManager.get('OWNER_NAME'); }
-};
