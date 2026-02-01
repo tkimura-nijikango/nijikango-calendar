@@ -262,6 +262,7 @@ export default function App() {
                 </>
             )}
 
+// End of App component
         </div>
     );
 }
