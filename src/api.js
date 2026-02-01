@@ -21,6 +21,9 @@ export async function getAvailableSlots(userId = null) {
     }
 
     const url = new URL(API_BASE_URL);
+    // Main.gsでのルーティング用
+    url.searchParams.append('action', 'get_slots');
+
     if (userId) {
         url.searchParams.append('userId', userId);
     }

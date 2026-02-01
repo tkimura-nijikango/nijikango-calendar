@@ -4,6 +4,7 @@ import TimeSlots from './components/TimeSlots';
 import BookingForm from './components/BookingForm';
 import Confirmation from './components/Confirmation';
 import { getAvailableSlots, createBooking } from './api';
+import DebugConsole from './components/DebugConsole';
 
 // ステップ定義
 const STEPS = {
@@ -261,6 +262,9 @@ export default function App() {
                     )}
                 </>
             )}
+
+            {/* デバッグ用コンソール（実機デバッグ用） */}
+            <DebugConsole />
         </div>
     );
 }
