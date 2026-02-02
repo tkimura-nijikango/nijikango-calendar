@@ -20,6 +20,24 @@ const CalendarService = {
       return [];
     }
 
+    // 🚀 高速化: 期間中のイベントを一括取得（N回呼び出し → 1回呼び出し）
+    // 期間の開始〜終了までの全イベントを取得しておく
+    const periodStart = new Date(startDate);
+    periodStart.setHours(0, 0, 0, 0);
+    const periodEnd = new Date(endDate);
+    periodEnd.setHours(23, 59, 59, 999);
+
+    let allBusyTimes = [];
+    try {
+      const events = calendar.getEvents(periodStart, periodEnd);
+      allBusyTimes = events.map(event => ({
+        start: event.getStartTime(),
+        end: event.getEndTime()
+      }));
+    } catch (e) {
+      console.error('Error batch fetching events:', e);
+    }
+
     const slots = [];
     const currentDate = new Date(startDate);
     currentDate.setHours(0, 0, 0, 0);
@@ -31,7 +49,7 @@ const CalendarService = {
       if (config.availableDays.includes(dayOfWeek)) {
         const daySlots = this._getDaySlotsWithAvailability(
           new Date(currentDate), 
-          calendar, 
+          allBusyTimes, // 一括取得した予定を渡す
           config
         );
         slots.push(...daySlots);
@@ -47,9 +65,9 @@ const CalendarService = {
    * 特定日の空きスロットを取得
    * @private
    */
-  _getDaySlotsWithAvailability(date, calendar, config) {
+  _getDaySlotsWithAvailability(date, allBusyTimes, config) {
     const slots = [];
-    const busyTimes = this._getBusyTimes(date, calendar);
+    // allBusyTimesをそのまま判定に使う（日付またぎのチェックは不要、日付範囲外のものは単純にマッチしないだけ）
 
     for (let hour = config.availableStartHour; hour < config.availableEndHour; hour++) {
       const slotStart = new Date(date);
@@ -64,7 +82,7 @@ const CalendarService = {
       }
 
       // 既存予定と重複しないかチェック
-      const isBusy = busyTimes.some(busy => 
+      const isBusy = allBusyTimes.some(busy => 
         slotStart < busy.end && slotEnd > busy.start
       );
 
@@ -83,28 +101,19 @@ const CalendarService = {
   /**
    * 特定日の予定（ビジー時間）を取得
    * @private
+   * @deprecated 一括取得(_getAvailableSlots内)に移行したため未使用
    */
   _getBusyTimes(date, calendar) {
+    // Legacy support or fallback if needed
     const busyTimes = [];
-    
     const dayStart = new Date(date);
     dayStart.setHours(0, 0, 0, 0);
-    
     const dayEnd = new Date(date);
     dayEnd.setHours(23, 59, 59, 999);
-
     try {
       const events = calendar.getEvents(dayStart, dayEnd);
-      events.forEach(event => {
-        busyTimes.push({
-          start: event.getStartTime(),
-          end: event.getEndTime()
-        });
-      });
-    } catch (e) {
-      console.error('Error getting events:', e);
-    }
-
+      events.forEach(event => busyTimes.push({start: event.getStartTime(), end: event.getEndTime()}));
+    } catch(e) {}
     return busyTimes;
   },
 
