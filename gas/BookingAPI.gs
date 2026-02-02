@@ -132,12 +132,12 @@ const BookingAPI = {
                   },
                   {
                     type: 'button',
-                    action: { type: 'message', label: '👂 話を聞いてもらう', text: '話を聞いてほしい' },
+                    action: { type: 'message', label: '👂 状況を整理する', text: '状況整理チャット' },
                     style: 'secondary', margin: 'sm', height: 'sm'
                   },
                   {
                     type: 'button',
-                    action: { type: 'message', label: '💬 相談する', text: '相談したい' },
+                    action: { type: 'message', label: '💬 悩みを相談する', text: '悩み相談チャット' },
                     style: 'secondary', margin: 'sm', height: 'sm'
                   }
                 ],
