@@ -16,7 +16,7 @@ const STEPS = {
 
 /**
  * メインアプリケーション
- * アノキャリア予約フロー
+ * ニジ看護予約フロー
  */
 export default function App() {
     const [step, setStep] = useState(STEPS.CALENDAR);
@@ -167,7 +167,7 @@ export default function App() {
             <header className="header">
                 <img
                     src="./logo.jpg"
-                    alt="アノキャリア"
+                    alt="ニジ看護"
                     className="header__logo"
                 />
                 <h1 className="header__title">面談予約</h1>

@@ -149,7 +149,7 @@ const CalendarService = {
         content ? `ご相談内容: ${content}` : '',
         '',
         '---',
-        'アノキャリア予約システムにより作成'
+        'ニジ看護予約システムにより作成'
       ].filter(Boolean).join('\n');
 
       // カレンダーイベント作成

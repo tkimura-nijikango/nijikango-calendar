@@ -128,7 +128,7 @@ const BookingAPI = {
                   {
                     type: 'button',
                     action: { type: 'uri', label: '📋 他の求人を見る', uri: `https://line-login-gateway.pages.dev/jobs/?uid=${userId}` },
-                    style: 'primary', color: '#e85e15', margin: 'md', height: 'sm'
+                    style: 'primary', color: '#f88caa', margin: 'md', height: 'sm'
                   },
                   {
                     type: 'button',

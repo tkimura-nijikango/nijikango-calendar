@@ -4,7 +4,7 @@
 // ==============================================================================
 
 // GAS WebアプリのURL
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://script.google.com/macros/s/AKfycbyW2DFQ1EihC98tpz1tH0kvs-KUYc8byTizvPoedhosEp9lHP-Xyi9lywzuEfDk29qMlg/exec';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://script.google.com/macros/s/AKfycbwT4dlPuH3edMjF5aWRV_TgAzU0Rz7YS76Zb-H0Dv3G02ph0DR1KY006ldArCJZngFs/exec';
 
 // モックデータを使用するかどうか
 // GAS側のWebアプリがCORS対応したらfalseに変更
@@ -110,7 +110,7 @@ export async function createBooking(bookingData, userId = null) {
 }
 
 // ==============================================================================
-//  モックデータ（開発用） - アノキャリア仕様: 土曜除外、11-20時
+// モックデータ（開発用） - ニジ看護仕様
 // ==============================================================================
 
 function getMockSlots() {
@@ -152,7 +152,7 @@ function getMockSlots() {
         config: {
             slotDuration: 30,
             timezone: 'Asia/Tokyo',
-            ownerName: 'アノキャリア'
+            ownerName: 'ニジ看護'
         },
     };
 }

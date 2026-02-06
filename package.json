@@ -1,7 +1,7 @@
 {
   "name": "anocari-calendar",
   "version": "1.0.0",
-  "description": "アノキャリア 面談予約カレンダー",
+  "description": "ニジ看護 面談予約カレンダー",
   "type": "module",
   "scripts": {
     "dev": "vite",

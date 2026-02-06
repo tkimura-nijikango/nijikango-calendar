@@ -1,5 +1,5 @@
 /* ==============================================================================
-   🎨 アノキャリア 面談予約カレンダー - 白×オレンジ デザイン
+   🎨 ニジ看護 面談予約カレンダー - 白×ピンク デザイン
 ============================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&display=swap');
@@ -16,11 +16,11 @@
   --color-text-secondary: rgba(51, 51, 51, 0.7);
   --color-text-muted: rgba(51, 51, 51, 0.4);
 
-  /* Primary Accent - アノキャリアオレンジ */
-  --color-primary: #e85e15;
-  --color-primary-hover: #d4530f;
-  --color-primary-light: rgba(232, 94, 21, 0.1);
-  --color-primary-glow: rgba(232, 94, 21, 0.2);
+  /* Primary Accent - ニジ看護ピンク */
+  --color-primary: #f88caa;
+  --color-primary-hover: #e07b99;
+  --color-primary-light: rgba(248, 140, 170, 0.1);
+  --color-primary-glow: rgba(248, 140, 170, 0.2);
 
   /* Card & Surface */
   --card-bg: #ffffff;
@@ -109,7 +109,7 @@ body {
   border-radius: var(--border-radius-full);
   object-fit: cover;
   margin-bottom: var(--spacing-md);
-  box-shadow: 0 4px 16px rgba(232, 94, 21, 0.2);
+  box-shadow: 0 4px 16px rgba(248, 140, 170, 0.2);
 }
 
 .header__title {

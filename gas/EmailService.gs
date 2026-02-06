@@ -14,7 +14,7 @@ const EmailService = {
     const startDate = new Date(startTime);
     const formattedDate = this._formatDateTime(startDate);
     
-    const subject = `【アノキャリア】面談予約が完了しました - ${formattedDate}`;
+    const subject = `【ニジ看護】面談予約が完了しました - ${formattedDate}`;
     
     let body = `${name}様
 
@@ -48,7 +48,7 @@ ${content}`;
 当日お話できることを楽しみにしております！
 
 ──────────────────────
-アノキャリア
+ニジ看護
 ──────────────────────`;
 
     try {
