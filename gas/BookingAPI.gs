@@ -127,7 +127,7 @@ const BookingAPI = {
                   { type: 'text', text: '面談までの間、どうしますか？', weight: 'bold', size: 'sm', align: 'center' },
                   {
                     type: 'button',
-                    action: { type: 'uri', label: '📋 他の求人を見る', uri: `https://line-login-gateway.pages.dev/jobs/?uid=${userId}` },
+                    action: { type: 'uri', label: '📋 他の求人を見る', uri: `https://nijikango-jobs.pages.dev/?uid=${userId}` },
                     style: 'primary', color: '#f88caa', margin: 'md', height: 'sm'
                   },
                   {
