@@ -90,7 +90,7 @@ export default function TimeSlots({ slots, selectedDate, selectedTime, onSelectT
                     onClick={handleConfirm}
                     style={{ marginTop: '16px' }}
                 >
-                    この時間で予約へ進む
+                    この時間で予約する
                 </button>
             )}
         </div>

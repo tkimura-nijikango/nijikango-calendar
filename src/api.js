@@ -7,12 +7,11 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://script.google.com/macros/s/AKfycbwT4dlPuH3edMjF5aWRV_TgAzU0Rz7YS76Zb-H0Dv3G02ph0DR1KY006ldArCJZngFs/exec';
 
 // モックデータを使用するかどうか
-// GAS側のWebアプリがCORS対応したらfalseに変更
 const USE_MOCK = false;
 
 /**
  * 空き時間を取得
- * @param {string} userId - 将来のマルチユーザー対応用
+ * @param {string} userId - ユーザーID
  * @returns {Promise<Object>} 空きスロット情報
  */
 export async function getAvailableSlots(userId = null) {
@@ -21,7 +20,6 @@ export async function getAvailableSlots(userId = null) {
     }
 
     const url = new URL(API_BASE_URL);
-    // Main.gsでのルーティング用
     url.searchParams.append('action', 'get_slots');
 
     if (userId) {
@@ -39,7 +37,6 @@ export async function getAvailableSlots(userId = null) {
         });
 
         console.log('[API] Response status:', response.status);
-        console.log('[API] Response headers:', Object.fromEntries(response.headers.entries()));
 
         if (!response.ok) {
             const errorText = await response.text();
@@ -57,13 +54,10 @@ export async function getAvailableSlots(userId = null) {
 }
 
 /**
- * 予約を作成
+ * 予約を作成（name/email不要 → userIdからGAS側で取得）
  * @param {Object} bookingData - 予約データ
  * @param {string} bookingData.datetime - ISO8601形式の日時
- * @param {string} bookingData.name - 予約者名
- * @param {string} bookingData.email - メールアドレス
- * @param {string} bookingData.content - MTG内容（任意）
- * @param {string} userId - 将来のマルチユーザー対応用
+ * @param {string} userId - LINE ユーザーID
  * @returns {Promise<Object>} 予約結果
  */
 export async function createBooking(bookingData, userId = null) {
@@ -83,13 +77,13 @@ export async function createBooking(bookingData, userId = null) {
                 'Content-Type': 'text/plain',
             },
             body: JSON.stringify({
-                ...bookingData,
+                action: 'create_booking',
+                datetime: bookingData.datetime,
                 userId,
             }),
         });
 
         console.log('[API] Response status:', response.status);
-        console.log('[API] Response headers:', Object.fromEntries(response.headers.entries()));
 
         const text = await response.text();
         console.log('[API] Response text:', text);
@@ -100,7 +94,6 @@ export async function createBooking(bookingData, userId = null) {
             return data;
         } catch (e) {
             console.error('[API] JSON parse error:', e);
-            console.error('[API] Raw text:', text);
             throw new Error('予約の作成に失敗しました');
         }
     } catch (error) {
@@ -110,38 +103,28 @@ export async function createBooking(bookingData, userId = null) {
 }
 
 // ==============================================================================
-// モックデータ（開発用） - ニジ看護仕様
+// モックデータ（開発用）
 // ==============================================================================
 
 function getMockSlots() {
     const slots = [];
     const now = new Date();
 
-    // 30日分のスロットを生成
     for (let day = 1; day <= 30; day++) {
         const date = new Date(now);
         date.setDate(date.getDate() + day);
         date.setHours(0, 0, 0, 0);
 
-        const dayOfWeek = date.getDay();
+        for (let hour = 9; hour < 21; hour++) {
+            if (Math.random() > 0.3) {
+                const slotDate = new Date(date);
+                slotDate.setHours(hour, 0, 0, 0);
 
-        // 土曜日（6）を除外
-        if (dayOfWeek === 6) continue;
-
-        // 11:00〜20:00のスロット（30分間隔でランダムに空きを作成）
-        for (let hour = 11; hour < 20; hour++) {
-            for (let minute = 0; minute < 60; minute += 30) {
-                // 70%の確率で空き
-                if (Math.random() > 0.3) {
-                    const slotDate = new Date(date);
-                    slotDate.setHours(hour, minute, 0, 0);
-
-                    slots.push({
-                        date: formatDate(slotDate),
-                        time: formatTime(slotDate),
-                        datetime: slotDate.toISOString(),
-                    });
-                }
+                slots.push({
+                    date: formatDate(slotDate),
+                    time: formatTime(slotDate),
+                    datetime: slotDate.toISOString(),
+                });
             }
         }
     }
@@ -150,7 +133,7 @@ function getMockSlots() {
         success: true,
         slots,
         config: {
-            slotDuration: 30,
+            slotDuration: 60,
             timezone: 'Asia/Tokyo',
             ownerName: 'ニジ看護'
         },
@@ -165,7 +148,7 @@ function getMockBookingResult(bookingData) {
                 eventId: 'mock-event-' + Date.now(),
                 meetLink: 'https://meet.google.com/xxx-xxxx-xxx',
                 startTime: bookingData.datetime,
-                endTime: new Date(new Date(bookingData.datetime).getTime() + 30 * 60 * 1000).toISOString(),
+                endTime: new Date(new Date(bookingData.datetime).getTime() + 60 * 60 * 1000).toISOString(),
             });
         }, 1500);
     });

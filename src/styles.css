@@ -315,11 +315,15 @@ body {
   box-shadow: 0 4px 16px var(--color-primary-glow);
 }
 
-.calendar__day--unavailable,
 .calendar__day--past {
   color: var(--color-text-muted);
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+.calendar__day--unavailable {
+  color: var(--color-text);
+  cursor: pointer;
 }
 
 /* Time Slots */

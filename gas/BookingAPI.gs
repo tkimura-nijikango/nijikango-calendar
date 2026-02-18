@@ -1,6 +1,6 @@
 // ==============================================================================
 //  🌐 BookingAPI.gs
-//  カレンダー予約機能コントローラー
+//  カレンダー予約機能コントローラー（name/email不要・面談予約シート対応版）
 // ==============================================================================
 
 const BookingAPI = {
@@ -12,19 +12,19 @@ const BookingAPI = {
     try {
       const params = e.parameter || {};
       const userId = params.userId || null;
-      
+
       // 取得期間を計算
       const startDate = new Date();
       startDate.setDate(startDate.getDate() + 1); // 翌日から
       startDate.setHours(0, 0, 0, 0);
-      
+
       const endDate = new Date(startDate);
       const daysAhead = ConfigManager.get('DAYS_AHEAD', userId);
       endDate.setDate(endDate.getDate() + daysAhead);
-      
+
       // 空きスロットを取得
       const slots = CalendarService.getAvailableSlots(startDate, endDate, userId);
-      
+
       const response = {
         success: true,
         slots: slots,
@@ -34,9 +34,9 @@ const BookingAPI = {
           ownerName: ConfigManager.get('OWNER_NAME', userId)
         }
       };
-      
+
       return this._createCorsResponse(response);
-      
+
     } catch (error) {
       console.error('handleGetSlots error:', error);
       return this._createCorsResponse({
@@ -47,7 +47,7 @@ const BookingAPI = {
   },
 
   /**
-   * 予約作成
+   * 予約作成（name/email不要 → userIdからスプレッドシートで取得）
    * @param {Object} e - リクエストイベント
    */
   handleCreateBooking(e) {
@@ -59,61 +59,85 @@ const BookingAPI = {
       } catch (parseError) {
         return this._createCorsResponse({ success: false, error: 'JSON parse error' });
       }
-      
-      const { datetime, name, email, content, userId } = data;
-      
+
+      const { datetime, userId } = data;
+
       // バリデーション
-      if (!datetime || !name || !email) {
+      if (!datetime) {
         return this._createCorsResponse({
           success: false,
-          error: '必須項目が不足しています（datetime, name, email）'
+          error: '日時が指定されていません'
         });
       }
-      
-      // メールアドレスの簡易バリデーション
-      if (!email.includes('@')) {
+
+      if (!userId) {
         return this._createCorsResponse({
           success: false,
-          error: 'メールアドレスの形式が正しくありません'
+          error: 'ユーザーIDが指定されていません'
         });
       }
-      
-      // 予約作成
+
+      // ユーザー情報をスプレッドシートから取得
+      let userName = 'ゲスト';
+      let userEmail = '';
+      let userPhone = '';
+      try {
+        const user = SheetManager.getUser(userId);
+        if (user) {
+          userName = user['本名'] || user['LINE名'] || 'ゲスト';
+          userEmail = user['メール'] || '';
+          userPhone = user['電話番号'] || '';
+        }
+      } catch (userErr) {
+        emergencyLog(`⚠️ User lookup failed for ${userId}: ${userErr.toString()}`);
+      }
+
+      // Googleカレンダーに予約作成
       const bookingResult = CalendarService.createBooking(
-        datetime, 
-        name, 
-        email, 
-        content || '',
-        userId || null
+        datetime,
+        userName,
+        userEmail,
+        '',
+        userId
       );
-      
+
       if (!bookingResult.success) {
         return this._createCorsResponse({
           success: false,
           error: bookingResult.error || '予約の作成に失敗しました'
         });
       }
-      
-      // 確認メール送信
-      EmailService.sendConfirmation({
-        name: name,
-        email: email,
-        startTime: bookingResult.startTime,
-        endTime: bookingResult.endTime,
-        meetLink: bookingResult.meetLink,
-        content: content || ''
-      });
 
-      // 🔄 予約完了後のLINEメッセージ送信（ユーザー要望）
+      // 面談予約シートに書き込み
+      this._saveToBookingSheet(userId, userName, userEmail, userPhone, datetime, bookingResult);
+
+      // 確認メール送信（メールがある場合のみ）
+      if (userEmail) {
+        try {
+          EmailService.sendConfirmation({
+            name: userName,
+            email: userEmail,
+            startTime: bookingResult.startTime,
+            endTime: bookingResult.endTime,
+            meetLink: bookingResult.meetLink,
+            content: ''
+          });
+        } catch (emailErr) {
+          emergencyLog(`⚠️ Email send failed: ${emailErr.toString()}`);
+        }
+      }
+
+      // 予約完了後のLINEメッセージ送信
       if (userId) {
         try {
-          // 完了メッセージ
+          const dateObj = new Date(datetime);
+          const dateStr = dateObj.toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+
           const completeMsg = {
             type: 'text',
-            text: `${name}さん、面談予約ありがとうございます！🎉\n日程: ${new Date(datetime).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' })}\n\n当日お話しできるのを楽しみにしています！😊`
+            text: `${userName}さん、面談予約ありがとうございます！🎉\n日程: ${dateStr}\n\n当日お話しできるのを楽しみにしています！😊`
           };
 
-          // 3つの選択肢
           const nextActionMsg = {
             type: 'flex',
             altText: '次のステップ',
@@ -151,7 +175,18 @@ const BookingAPI = {
           console.error('Failed to send LINE completion message:', lineError);
         }
       }
-      
+
+      // ユーザー管理シートのフェーズ更新
+      try {
+        SheetManager.updateUser(userId, {
+          [CONFIG.USERS_COL.PHASE[0]]: CONFIG.PHASE.APPOINTMENT_BOOKED,
+          [CONFIG.USERS_COL.STATUS[0]]: CONFIG.STATUS.APPOINTMENT_BOOKED,
+          [CONFIG.USERS_COL.SCHEDULED_DATE[0]]: new Date(datetime)
+        });
+      } catch (updateErr) {
+        emergencyLog(`⚠️ User phase update failed: ${updateErr.toString()}`);
+      }
+
       return this._createCorsResponse({
         success: true,
         eventId: bookingResult.eventId,
@@ -159,13 +194,57 @@ const BookingAPI = {
         startTime: bookingResult.startTime,
         endTime: bookingResult.endTime
       });
-      
+
     } catch (error) {
       console.error('handleCreateBooking error:', error);
       return this._createCorsResponse({
         success: false,
         error: error.message
       });
+    }
+  },
+
+  /**
+   * 面談予約シートに書き込み
+   * @private
+   */
+  _saveToBookingSheet(userId, userName, email, phone, datetime, bookingResult) {
+    try {
+      const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+      let sheet = ss.getSheetByName('面談予約');
+
+      // シートがなければ作成
+      if (!sheet) {
+        sheet = ss.insertSheet('面談予約');
+        sheet.appendRow([
+          '予約日時', '予約作成日', 'LINEID', '氏名', 'メール', '電話番号',
+          '開始時間', '終了時間', 'Meet URL', 'カレンダーイベントID', 'ステータス'
+        ]);
+        // ヘッダー行の書式設定
+        sheet.getRange(1, 1, 1, 11).setFontWeight('bold');
+        emergencyLog('📅 面談予約シートを新規作成しました');
+      }
+
+      const startTime = bookingResult.startTime ? new Date(bookingResult.startTime) : new Date(datetime);
+      const endTime = bookingResult.endTime ? new Date(bookingResult.endTime) : new Date(new Date(datetime).getTime() + 60 * 60 * 1000);
+
+      sheet.appendRow([
+        new Date(datetime),           // 予約日時
+        new Date(),                    // 予約作成日
+        userId,                        // LINEID
+        userName,                      // 氏名
+        email,                         // メール
+        phone,                         // 電話番号
+        startTime,                     // 開始時間
+        endTime,                       // 終了時間
+        bookingResult.meetLink || '',  // Meet URL
+        bookingResult.eventId || '',   // カレンダーイベントID
+        '予約済み'                      // ステータス
+      ]);
+
+      emergencyLog(`📅 面談予約をシートに保存: ${userName} (${userId}) - ${datetime}`);
+    } catch (sheetErr) {
+      emergencyLog(`❌ 面談予約シート書き込みエラー: ${sheetErr.toString()}`);
     }
   },
 

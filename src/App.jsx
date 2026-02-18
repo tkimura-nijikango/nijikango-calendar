@@ -1,17 +1,15 @@
 import { useState, useEffect } from 'react';
 import Calendar from './components/Calendar';
 import TimeSlots from './components/TimeSlots';
-import BookingForm from './components/BookingForm';
 import Confirmation from './components/Confirmation';
 import { getAvailableSlots, createBooking } from './api';
 
-// ステップ定義
+// ステップ定義（FORMステップ削除 → 2ステップ）
 const STEPS = {
     CALENDAR: 1,
     TIME_SELECT: 2,
-    FORM: 3,
-    SUBMITTING: 4,      // 送信中（新規追加）
-    CONFIRMATION: 5,
+    SUBMITTING: 3,
+    CONFIRMATION: 4,
 };
 
 /**
@@ -26,7 +24,6 @@ export default function App() {
     const [selectedTime, setSelectedTime] = useState(null);
     const [booking, setBooking] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
 
     // URLパラメータからユーザーIDを取得
@@ -78,16 +75,15 @@ export default function App() {
         setStep(STEPS.TIME_SELECT);
     };
 
-    // 時間選択
+    // 時間選択 → 直接予約送信（FORMステップ不要）
     const handleSelectTime = (datetime) => {
         setSelectedTime(datetime);
-        setStep(STEPS.FORM);
+        handleSubmit(datetime);
     };
 
     // 予約送信（先に送信中画面を表示し、裏で処理を続ける）
-    const handleSubmit = async (formData) => {
-        console.log('[App] handleSubmit called with:', formData);
-        setIsSubmitting(true);
+    const handleSubmit = async (datetime) => {
+        console.log('[App] handleSubmit called with datetime:', datetime);
         setError(null);
 
         // 先に送信中画面を表示
@@ -98,24 +94,22 @@ export default function App() {
 
         // 予約データを先にセット（Confirmationで使う）
         const tempBooking = {
-            ...formData,
-            startTime: formData.datetime,
-            meetLink: null, // 後で更新される可能性あり
+            datetime: datetime,
+            startTime: datetime,
+            meetLink: null,
         };
         setBooking(tempBooking);
 
         // 先にサンクスページを表示
         console.log('[App] Showing confirmation screen');
         setStep(STEPS.CONFIRMATION);
-        setIsSubmitting(false);
 
         // 裏側でAPIリクエストを実行（投げっぱなし）
         console.log('[App] Starting background booking API call...');
-        createBooking(formData, userId)
+        createBooking({ datetime }, userId)
             .then(result => {
                 console.log('[App] Background booking result:', result);
                 if (result.success) {
-                    // 成功したらmeetLinkを更新
                     setBooking(prev => ({
                         ...prev,
                         ...result,
@@ -144,19 +138,11 @@ export default function App() {
         setStep(STEPS.CALENDAR);
     };
 
-    const handleBackToTimeSelect = () => {
-        setSelectedTime(null);
-        setStep(STEPS.TIME_SELECT);
-    };
-
-    // 現在のステップ番号（表示用）
+    // 現在のステップ番号（表示用: 2ステップ）
     const currentStepNumber = () => {
         switch (step) {
             case STEPS.CALENDAR: return 1;
             case STEPS.TIME_SELECT: return 2;
-            case STEPS.FORM: return 3;
-            case STEPS.SUBMITTING: return 3;
-            case STEPS.CONFIRMATION: return 4;
             default: return 1;
         }
     };
@@ -174,14 +160,12 @@ export default function App() {
                 <p className="header__subtitle">ご都合の良い日時をお選びください</p>
             </header>
 
-            {/* プログレスステップ（確認画面以外） */}
+            {/* プログレスステップ（2ステップ表示） */}
             {step !== STEPS.CONFIRMATION && step !== STEPS.SUBMITTING && (
                 <div className="progress">
                     <div className={`progress__step ${currentStepNumber() >= 1 ? 'progress__step--completed' : ''} ${currentStepNumber() === 1 ? 'progress__step--active' : ''}`}>1</div>
                     <div className={`progress__line ${currentStepNumber() > 1 ? 'progress__line--completed' : ''}`}></div>
                     <div className={`progress__step ${currentStepNumber() >= 2 ? 'progress__step--completed' : ''} ${currentStepNumber() === 2 ? 'progress__step--active' : ''}`}>2</div>
-                    <div className={`progress__line ${currentStepNumber() > 2 ? 'progress__line--completed' : ''}`}></div>
-                    <div className={`progress__step ${currentStepNumber() >= 3 ? 'progress__step--completed' : ''} ${currentStepNumber() === 3 ? 'progress__step--active' : ''}`}>3</div>
                 </div>
             )}
 
@@ -210,7 +194,7 @@ export default function App() {
                     <div className="loading-overlay__content">
                         <div className="loading-overlay__spinner"></div>
                         <p className="loading-overlay__text">
-                            送信中<span className="loading-dots"><span>.</span><span>.</span><span>.</span></span>
+                            予約中<span className="loading-dots"><span>.</span><span>.</span><span>.</span></span>
                         </p>
                     </div>
                 </div>
@@ -242,15 +226,6 @@ export default function App() {
                         </div>
                     )}
 
-                    {step === STEPS.FORM && (
-                        <BookingForm
-                            selectedTime={selectedTime}
-                            onSubmit={handleSubmit}
-                            onBack={handleBackToTimeSelect}
-                            isSubmitting={isSubmitting}
-                        />
-                    )}
-
                     {step === STEPS.CONFIRMATION && (
                         <div className="card">
                             <Confirmation
@@ -261,8 +236,6 @@ export default function App() {
                     )}
                 </>
             )}
-
-// End of App component
         </div>
     );
 }
