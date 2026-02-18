@@ -81,7 +81,7 @@ export default function Calendar({ slots, selectedDate, onSelectDate }) {
 
     const canGoNext = useMemo(() => {
         const maxDate = new Date();
-        maxDate.setDate(maxDate.getDate() + 30);
+        maxDate.setDate(maxDate.getDate() + 90);
         return currentMonth < new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
     }, [currentMonth]);
 
@@ -94,7 +94,7 @@ export default function Calendar({ slots, selectedDate, onSelectDate }) {
     };
 
     const handleDayClick = (day) => {
-        if (day.type === 'available' || day.isToday) {
+        if (day.type !== 'past' && day.type !== 'empty') {
             onSelectDate(day.date);
         }
     };
@@ -147,7 +147,7 @@ export default function Calendar({ slots, selectedDate, onSelectDate }) {
               ${day.isSelected ? 'calendar__day--selected' : ''}
             `}
                         onClick={() => day.date && handleDayClick(day)}
-                        disabled={day.type === 'empty' || day.type === 'past' || day.type === 'unavailable'}
+                        disabled={day.type === 'empty' || day.type === 'past'}
                     >
                         {day.day || ''}
                     </button>

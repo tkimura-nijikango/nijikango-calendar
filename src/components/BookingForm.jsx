@@ -28,8 +28,8 @@ export default function BookingForm({
         const minutes = String(date.getMinutes()).padStart(2, '0');
         const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
         const dayOfWeek = dayNames[date.getDay()];
-        // 30分後の終了時間
-        const endDate = new Date(date.getTime() + 30 * 60 * 1000);
+        // 1時間後の終了時間
+        const endDate = new Date(date.getTime() + 60 * 60 * 1000);
         const endHours = String(endDate.getHours()).padStart(2, '0');
         const endMinutes = String(endDate.getMinutes()).padStart(2, '0');
         return `${year}年${month}月${day}日（${dayOfWeek}） ${hours}:${minutes}〜${endHours}:${endMinutes}`;
