@@ -296,7 +296,7 @@ body {
 
 .calendar__day--available {
   background: var(--color-primary-light);
-  border-color: var(--color-primary);
+  border: 2px solid rgba(248, 140, 170, 0.45);
   color: var(--color-primary);
   font-weight: 600;
 }

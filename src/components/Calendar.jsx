@@ -40,6 +40,11 @@ export default function Calendar({ slots, selectedDate, onSelectDate }) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
+        // 当日予約ブロック判定
+        const now = new Date();
+        const todayDayOfWeek = now.getDay(); // 0=日, 6=土
+        const isTodayBlocked = now.getHours() >= 20 || todayDayOfWeek === 0 || todayDayOfWeek === 6;
+
         for (let day = 1; day <= lastDate; day++) {
             const date = new Date(year, month, day);
             const dateStr = formatDateStr(date);
@@ -47,6 +52,8 @@ export default function Calendar({ slots, selectedDate, onSelectDate }) {
             let type = 'normal';
 
             if (date < today) {
+                type = 'past';
+            } else if (date.getTime() === today.getTime() && isTodayBlocked) {
                 type = 'past';
             } else if (availableDates.has(dateStr)) {
                 type = 'available';

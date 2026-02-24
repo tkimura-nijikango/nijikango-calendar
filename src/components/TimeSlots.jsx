@@ -7,10 +7,17 @@ import { useState, useMemo } from 'react';
 export default function TimeSlots({ slots, selectedDate, selectedTime, onSelectTime, onBack }) {
     const [selectedHour, setSelectedHour] = useState('');
 
-    // 1時間枠の選択肢を生成（9:00〜20:00）
+    // 1時間枠の選択肢を生成（11:00〜19:00、当日は過ぎた時間を除外）
     const timeOptions = useMemo(() => {
         const options = [];
-        for (let h = 9; h <= 20; h++) {
+        const now = new Date();
+        const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const isToday = selectedDate === todayStr;
+
+        for (let h = 11; h <= 19; h++) {
+            // 当日の場合、現在時刻以前のスロットはスキップ
+            if (isToday && h <= now.getHours()) continue;
+
             const startHour = String(h).padStart(2, '0');
             const endHour = String(h + 1).padStart(2, '0');
             options.push({
@@ -19,7 +26,7 @@ export default function TimeSlots({ slots, selectedDate, selectedTime, onSelectT
             });
         }
         return options;
-    }, []);
+    }, [selectedDate]);
 
     // 選択した日付の既存スロットを確認（空きがある時間をハイライト用）
     const availableHours = useMemo(() => {
