@@ -291,12 +291,12 @@ body {
 
 .calendar__day--today {
   font-weight: 700;
+  background: rgba(248, 140, 170, 0.13);
   border: 2px solid var(--color-primary) !important;
 }
 
 .calendar__day--available {
-  background: var(--color-primary-light);
-  border: 2px solid rgba(248, 140, 170, 0.45);
+  background: rgba(248, 140, 170, 0.13);
   color: var(--color-primary);
   font-weight: 600;
 }
@@ -308,6 +308,16 @@ body {
   box-shadow: 0 4px 12px var(--color-primary-glow);
 }
 
+.calendar__day--unavailable {
+  background: rgba(248, 140, 170, 0.13);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.calendar__day--unavailable:hover {
+  background: rgba(248, 140, 170, 0.25);
+}
+
 .calendar__day--selected {
   background: var(--color-primary) !important;
   border-color: var(--color-primary) !important;
@@ -316,14 +326,10 @@ body {
 }
 
 .calendar__day--past {
+  background: transparent;
   color: var(--color-text-muted);
   opacity: 0.4;
   cursor: not-allowed;
-}
-
-.calendar__day--unavailable {
-  color: var(--color-text);
-  cursor: pointer;
 }
 
 /* Time Slots */
