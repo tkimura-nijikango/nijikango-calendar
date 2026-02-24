@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
 import Calendar from './components/Calendar';
 import TimeSlots from './components/TimeSlots';
+import BookingForm from './components/BookingForm';
 import Confirmation from './components/Confirmation';
 import { getAvailableSlots, createBooking } from './api';
 
-// ステップ定義（FORMステップ削除 → 2ステップ）
+// ステップ定義（3ステップ: カレンダー → 時間選択 → フォーム入力）
 const STEPS = {
     CALENDAR: 1,
     TIME_SELECT: 2,
-    SUBMITTING: 3,
-    CONFIRMATION: 4,
+    FORM: 3,
+    SUBMITTING: 4,
+    CONFIRMATION: 5,
 };
 
 /**
@@ -75,15 +77,20 @@ export default function App() {
         setStep(STEPS.TIME_SELECT);
     };
 
-    // 時間選択 → 直接予約送信（FORMステップ不要）
+    // 時間選択 → フォーム入力画面へ
     const handleSelectTime = (datetime) => {
         setSelectedTime(datetime);
-        handleSubmit(datetime);
+        setStep(STEPS.FORM);
+    };
+
+    // フォーム送信 → 予約作成
+    const handleFormSubmit = (formData) => {
+        handleSubmit(formData.datetime, formData);
     };
 
     // 予約送信（先に送信中画面を表示し、裏で処理を続ける）
-    const handleSubmit = async (datetime) => {
-        console.log('[App] handleSubmit called with datetime:', datetime);
+    const handleSubmit = async (datetime, formData = {}) => {
+        console.log('[App] handleSubmit called with datetime:', datetime, 'formData:', formData);
         setError(null);
 
         // 先に送信中画面を表示
@@ -106,7 +113,12 @@ export default function App() {
 
         // 裏側でAPIリクエストを実行（投げっぱなし）
         console.log('[App] Starting background booking API call...');
-        createBooking({ datetime }, userId)
+        createBooking({
+            datetime,
+            name: formData.name || '',
+            phone: formData.phone || '',
+            email: formData.email || '',
+        }, userId)
             .then(result => {
                 console.log('[App] Background booking result:', result);
                 if (result.success) {
@@ -132,17 +144,23 @@ export default function App() {
         setError(null);
     };
 
-    // 戻る
+    // 戻る（カレンダーへ）
     const handleBackToCalendar = () => {
         setSelectedDate(null);
         setStep(STEPS.CALENDAR);
     };
 
-    // 現在のステップ番号（表示用: 2ステップ）
+    // 戻る（時間選択へ）
+    const handleBackToTimeSelect = () => {
+        setStep(STEPS.TIME_SELECT);
+    };
+
+    // 現在のステップ番号（表示用: 3ステップ）
     const currentStepNumber = () => {
         switch (step) {
             case STEPS.CALENDAR: return 1;
             case STEPS.TIME_SELECT: return 2;
+            case STEPS.FORM: return 3;
             default: return 1;
         }
     };
@@ -160,12 +178,14 @@ export default function App() {
                 <p className="header__subtitle">ご都合の良い日時をお選びください</p>
             </header>
 
-            {/* プログレスステップ（2ステップ表示） */}
+            {/* プログレスステップ（3ステップ表示） */}
             {step !== STEPS.CONFIRMATION && step !== STEPS.SUBMITTING && (
                 <div className="progress">
                     <div className={`progress__step ${currentStepNumber() >= 1 ? 'progress__step--completed' : ''} ${currentStepNumber() === 1 ? 'progress__step--active' : ''}`}>1</div>
                     <div className={`progress__line ${currentStepNumber() > 1 ? 'progress__line--completed' : ''}`}></div>
                     <div className={`progress__step ${currentStepNumber() >= 2 ? 'progress__step--completed' : ''} ${currentStepNumber() === 2 ? 'progress__step--active' : ''}`}>2</div>
+                    <div className={`progress__line ${currentStepNumber() > 2 ? 'progress__line--completed' : ''}`}></div>
+                    <div className={`progress__step ${currentStepNumber() >= 3 ? 'progress__step--completed' : ''} ${currentStepNumber() === 3 ? 'progress__step--active' : ''}`}>3</div>
                 </div>
             )}
 
@@ -224,6 +244,15 @@ export default function App() {
                                 onBack={handleBackToCalendar}
                             />
                         </div>
+                    )}
+
+                    {step === STEPS.FORM && (
+                        <BookingForm
+                            selectedTime={selectedTime}
+                            onSubmit={handleFormSubmit}
+                            onBack={handleBackToTimeSelect}
+                            isSubmitting={step === STEPS.SUBMITTING}
+                        />
                     )}
 
                     {step === STEPS.CONFIRMATION && (

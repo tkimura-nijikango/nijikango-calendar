@@ -4,7 +4,7 @@
 // ==============================================================================
 
 // GAS WebアプリのURL
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://script.google.com/macros/s/AKfycbwT4dlPuH3edMjF5aWRV_TgAzU0Rz7YS76Zb-H0Dv3G02ph0DR1KY006ldArCJZngFs/exec';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://script.google.com/macros/s/AKfycbwgGfNXsduo1lZWAAbwJz-xdrAsXp3zTeiOx-KIrvtC4AK_09q7nV-ZYYRxoeIbXBrzqw/exec';
 
 // モックデータを使用するかどうか
 const USE_MOCK = false;
@@ -54,9 +54,12 @@ export async function getAvailableSlots(userId = null) {
 }
 
 /**
- * 予約を作成（name/email不要 → userIdからGAS側で取得）
+ * 予約を作成（フォームからname/phone/emailを送信）
  * @param {Object} bookingData - 予約データ
  * @param {string} bookingData.datetime - ISO8601形式の日時
+ * @param {string} bookingData.name - お名前
+ * @param {string} bookingData.phone - 電話番号
+ * @param {string} bookingData.email - メールアドレス
  * @param {string} userId - LINE ユーザーID
  * @returns {Promise<Object>} 予約結果
  */
@@ -79,6 +82,9 @@ export async function createBooking(bookingData, userId = null) {
             body: JSON.stringify({
                 action: 'create_booking',
                 datetime: bookingData.datetime,
+                name: bookingData.name || '',
+                phone: bookingData.phone || '',
+                email: bookingData.email || '',
                 userId,
             }),
         });

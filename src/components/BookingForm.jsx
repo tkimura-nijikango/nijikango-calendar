@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 
 /**
  * 予約フォームコンポーネント
- * 名前・メールを入力（話す内容は任意）
+ * 名前・電話番号・メールアドレスを入力
  */
 export default function BookingForm({
     selectedTime,
@@ -12,8 +12,8 @@ export default function BookingForm({
 }) {
     const [formData, setFormData] = useState({
         name: '',
+        phone: '',
         email: '',
-        content: '',
     });
     const [errors, setErrors] = useState({});
 
@@ -51,13 +51,17 @@ export default function BookingForm({
             newErrors.name = 'お名前を入力してください';
         }
 
+        if (!formData.phone.trim()) {
+            newErrors.phone = '電話番号を入力してください';
+        } else if (!/^0[789]0\d{8}$/.test(formData.phone.replace(/[-\s]/g, ''))) {
+            newErrors.phone = '正しい携帯電話番号を入力してください（例: 09012345678）';
+        }
+
         if (!formData.email.trim()) {
             newErrors.email = 'メールアドレスを入力してください';
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
             newErrors.email = '正しいメールアドレスを入力してください';
         }
-
-        // content（話す内容）は任意なのでバリデーション不要
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -71,8 +75,8 @@ export default function BookingForm({
         onSubmit({
             datetime: selectedTime,
             name: formData.name.trim(),
+            phone: formData.phone.replace(/[-\s]/g, '').trim(),
             email: formData.email.trim(),
-            content: formData.content.trim(),
         });
     };
 
@@ -108,6 +112,23 @@ export default function BookingForm({
                     </div>
 
                     <div className="form__group">
+                        <label className="form__label form__label--required" htmlFor="phone">
+                            電話番号
+                        </label>
+                        <input
+                            type="tel"
+                            id="phone"
+                            name="phone"
+                            className="form__input"
+                            placeholder="09012345678"
+                            value={formData.phone}
+                            onChange={handleChange}
+                            disabled={isSubmitting}
+                        />
+                        {errors.phone && <span className="form__error">{errors.phone}</span>}
+                    </div>
+
+                    <div className="form__group">
                         <label className="form__label form__label--required" htmlFor="email">
                             メールアドレス
                         </label>
@@ -122,21 +143,6 @@ export default function BookingForm({
                             disabled={isSubmitting}
                         />
                         {errors.email && <span className="form__error">{errors.email}</span>}
-                    </div>
-
-                    <div className="form__group">
-                        <label className="form__label" htmlFor="content">
-                            ご相談内容（任意）
-                        </label>
-                        <textarea
-                            id="content"
-                            name="content"
-                            className="form__textarea"
-                            placeholder="事前にご相談されたいことがあればご記入ください"
-                            value={formData.content}
-                            onChange={handleChange}
-                            disabled={isSubmitting}
-                        />
                     </div>
 
                     <button
